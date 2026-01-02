@@ -222,6 +222,10 @@
     }
 
     render();
+    // play welcome voice on first load
+    window.addEventListener('load', () => {
+      playVoice('welcome.mp3');
+    });
   </script>
 </body>
 </html>
