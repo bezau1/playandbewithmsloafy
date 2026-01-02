@@ -1,1 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Play and Be With Ms Loafy</title>
+  <style>
+    :root{
+      --blue:#0a4fb3;
+      --blue-dark:#083b85;
+      --gray:#9e9e9e;
+      --cyan:#67e3e6;
+      --bg:#0b0b0b;
+      --text:#eaeaea;
+    }
+    *{box-sizing:border-box;font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", sans-serif;}
+    body{margin:0;background:#111;color:var(--text);}    
+    .app{
+      max-width:1200px;
+      margin:16px auto;
+      padding:12px;
+      background:var(--bg);
+      border-radius:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.4);
+      display:grid;
+      grid-template-columns: 1.2fr 1fr;
+      grid-template-rows: auto 1fr auto;
+      gap:12px;
+    }
+    .stats{
+      grid-column:1/2;
+      background:var(--blue);
+      border-radius:20px;
+      padding:16px;
+    }
+    .stats h2{margin:0 0 8px 0;font-weight:700;}
+    .bars{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+    .bar{background:rgba(255,255,255,.15);border-radius:12px;padding:10px;}
+    .bar label{font-size:12px;opacity:.9}
+    .meter{height:10px;border-radius:10px;background:#000;margin-top:6px;overflow:hidden}
+    .fill{height:100%;background:#fff;border-radius:10px}
 
+    .buttons{
+      grid-column:2/3;
+      grid-row:1/3;
+      background:var(--gray);
+      border-radius:24px;
+      padding:16px;
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:12px;
+      align-content:start;
+    }
+    .buttons h3{grid-column:1/-1;margin:0 0 6px 0;color:#111}
+    button{
+      border:none;
+      border-radius:16px;
+      padding:14px 12px;
+      background:var(--blue-dark);
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+      transition:transform .05s ease, filter .1s ease;
+    }
+    button:active{transform:translateY(1px);filter:brightness(.9)}
+
+    .stage{
+      grid-column:1/2;
+      background:#000;
+      border-radius:20px;
+      padding:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .reactions{
+      grid-column:2/3;
+      background:var(--cyan);
+      border-radius:24px;
+      padding:16px;
+      color:#0b2b2c;
+    }
+    .reactions h3{margin:0 0 8px 0}
+    .bubble{
+      background:rgba(255,255,255,.7);
+      border-radius:14px;
+      padding:10px 12px;
+      min-height:48px;
+    }
+
+    footer{
+      grid-column:1/-1;
+      text-align:center;
+      opacity:.7;
+      font-size:12px;
+    }
+
+    @media (max-width:900px){
+      .app{grid-template-columns:1fr;}
+      .buttons{grid-column:1/-1;grid-row:auto}
+      .reactions{grid-column:1/-1}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="stats">
+      <h2>Ms Loafy Stats</h2>
+      <div class="bars">
+        <div class="bar"><label>Hunger</label><div class="meter"><div id="hunger" class="fill" style="width:40%"></div></div></div>
+        <div class="bar"><label>Thirst</label><div class="meter"><div id="thirst" class="fill" style="width:55%"></div></div></div>
+        <div class="bar"><label>Love</label><div class="meter"><div id="love" class="fill" style="width:70%"></div></div></div>
+      </div>
+    </section>
+
+    <section class="buttons">
+      <h3>Actions</h3>
+      <button onclick="pet()">Pet</button>
+      <button onclick="spendTime()">Spend Time</button>
+      <button onclick="water()">Give Water</button>
+      <button onclick="cuddle()">Cuddle</button>
+      <button onclick="feed()">Feed</button>
+      <button onclick="play()">Play</button>
+    </section>
+
+    <section class="stage" style="flex-direction:column; gap:8px;">
+      <img id="loafyImg" src="sadmsloafy.png" alt="Ms Loafy" style="width:100%;height:100%;object-fit:contain;border-radius:16px;background:#111" />
+      <div id="loafyCaption" style="font-size:13px; opacity:.8;">sad ms loafy</div>
+    </section>
+
+    <section class="reactions">
+      <h3>Ms Loafy says</h3>
+      <div id="reaction" class="bubble">"hi..."</div>
+    </section>
+
+    <footer>Play and Be With Ms Loafy • inside character, inside joy</footer>
+  </div>
+
+  <script>
+    const clamp = (v) => Math.max(0, Math.min(100, v));
+
+    const el = {
+      hunger: document.getElementById('hunger'),
+      thirst: document.getElementById('thirst'),
+      love: document.getElementById('love'),
+      reaction: document.getElementById('reaction'),
+      loafyImg: document.getElementById('loafyImg'),
+      loafyCaption: document.getElementById('loafyCaption'),
+    };
+
+    let stats = { hunger: 40, thirst: 55, love: 70, happy: false };
+    let currentAudio = null;
+
+    function playVoice(file) {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+      }
+      currentAudio = new Audio(file);
+      currentAudio.play().catch(() => {});
+    }
+
+    function render() {
+      el.hunger.style.width = stats.hunger + '%';
+      el.thirst.style.width = stats.thirst + '%';
+      el.love.style.width = stats.love + '%';
+      if (stats.happy) {
+        el.loafyImg.src = 'happymsloafy.png';
+        el.loafyCaption.textContent = 'happy ms loafy';
+      } else {
+        el.loafyImg.src = 'sadmsloafy.png';
+        el.loafyCaption.textContent = 'sad ms loafy';
+      }
+    }
+
+    function say(text, audioFile) {
+      el.reaction.textContent = '"' + text + '"';
+      if (audioFile) playVoice(audioFile);
+    }
+
+    function feed() {
+      stats.hunger = clamp(stats.hunger + 15);
+      stats.love = clamp(stats.love + 5);
+      say('nom… thank you', 'feed.mp3');
+      render();
+    }
+
+    function water() {
+      stats.thirst = clamp(stats.thirst + 15);
+      say('glug', 'givewater.mp3');
+      render();
+    }
+
+    function pet() {
+      stats.love = clamp(stats.love + 10);
+      stats.happy = true;
+      say('purr', 'pet.mp3');
+      render();
+    }
+
+    function play() {
+      stats.love = clamp(stats.love + 15);
+      stats.hunger = clamp(stats.hunger - 5);
+      stats.happy = true;
+      say('yay!', 'play.mp3');
+      render();
+    }
+
+    function cuddle() {
+      stats.love = clamp(stats.love + 15);
+      stats.happy = true;
+      say('come here…', 'cuddle.mp3');
+      render();
+    }
+
+    function spendTime() {
+      stats.love = clamp(stats.love + 10);
+      stats.thirst = clamp(stats.thirst - 5);
+      say('i like this', 'spendtime.mp3');
+      render();
+    }
+
+    render();
+  </script>
+</body>
+</html>
